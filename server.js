@@ -25,18 +25,114 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const countryLanguageMap = {
-  japan: { language: "Japanese", greeting: "こんにちは" },
-  france: { language: "French", greeting: "Bonjour" },
-  spain: { language: "Spanish", greeting: "Hola" },
-  germany: { language: "German", greeting: "Hallo" },
-  italy: { language: "Italian", greeting: "Ciao" },
-  china: { language: "Chinese", greeting: "你好" },
-  korea: { language: "Korean", greeting: "안녕하세요" },
-  brazil: { language: "Portuguese", greeting: "Olá" },
-  india: { language: "Hindi", greeting: "नमस्ते" },
-  canada: { language: "English", greeting: "Hello" },
-  "united states": { language: "English", greeting: "Hello" },
-  "united kingdom": { language: "English", greeting: "Hello" }
+  japan: {
+    language: "Japanese",
+    languageLocalized: "日本語",
+    greeting: "こんにちは",
+    greetingTemplate: "{greeting}、{name}さん！",
+    locale: "ja-JP",
+    countryLocalized: "日本",
+    labels: { name: "名前", address: "住所", country: "国", language: "言語" }
+  },
+  france: {
+    language: "French",
+    languageLocalized: "Français",
+    greeting: "Bonjour",
+    greetingTemplate: "{greeting}, {name} !",
+    locale: "fr-FR",
+    countryLocalized: "France",
+    labels: { name: "Nom", address: "Adresse", country: "Pays", language: "Langue" }
+  },
+  spain: {
+    language: "Spanish",
+    languageLocalized: "Español",
+    greeting: "Hola",
+    greetingTemplate: "¡{greeting}, {name}!",
+    locale: "es-ES",
+    countryLocalized: "España",
+    labels: { name: "Nombre", address: "Dirección", country: "País", language: "Idioma" }
+  },
+  germany: {
+    language: "German",
+    languageLocalized: "Deutsch",
+    greeting: "Hallo",
+    greetingTemplate: "{greeting}, {name}!",
+    locale: "de-DE",
+    countryLocalized: "Deutschland",
+    labels: { name: "Name", address: "Adresse", country: "Land", language: "Sprache" }
+  },
+  italy: {
+    language: "Italian",
+    languageLocalized: "Italiano",
+    greeting: "Ciao",
+    greetingTemplate: "{greeting}, {name}!",
+    locale: "it-IT",
+    countryLocalized: "Italia",
+    labels: { name: "Nome", address: "Indirizzo", country: "Paese", language: "Lingua" }
+  },
+  china: {
+    language: "Chinese",
+    languageLocalized: "中文",
+    greeting: "你好",
+    greetingTemplate: "{greeting}，{name}！",
+    locale: "zh-CN",
+    countryLocalized: "中国",
+    labels: { name: "姓名", address: "地址", country: "国家", language: "语言" }
+  },
+  korea: {
+    language: "Korean",
+    languageLocalized: "한국어",
+    greeting: "안녕하세요",
+    greetingTemplate: "{greeting}, {name}님!",
+    locale: "ko-KR",
+    countryLocalized: "대한민국",
+    labels: { name: "이름", address: "주소", country: "국가", language: "언어" }
+  },
+  brazil: {
+    language: "Portuguese",
+    languageLocalized: "Português",
+    greeting: "Olá",
+    greetingTemplate: "{greeting}, {name}!",
+    locale: "pt-BR",
+    countryLocalized: "Brasil",
+    labels: { name: "Nome", address: "Endereço", country: "País", language: "Idioma" }
+  },
+  india: {
+    language: "Hindi",
+    languageLocalized: "हिन्दी",
+    greeting: "नमस्ते",
+    greetingTemplate: "{greeting} {name}!",
+    locale: "hi-IN",
+    countryLocalized: "भारत",
+    labels: { name: "नाम", address: "पता", country: "देश", language: "भाषा" }
+  },
+  canada: {
+    language: "English",
+    languageLocalized: "English",
+    greeting: "Hello",
+    greetingTemplate: "{greeting}, {name}!",
+    locale: "en-CA",
+    countryLocalized: "Canada",
+    labels: { name: "Name", address: "Address", country: "Country", language: "Language" }
+  },
+  "united states": {
+    language: "English",
+    languageLocalized: "English",
+    greeting: "Hello",
+    greetingTemplate: "{greeting}, {name}!",
+    locale: "en-US",
+    countryLocalized: "United States",
+    labels: { name: "Name", address: "Address", country: "Country", language: "Language" }
+  },
+  "united kingdom": {
+    language: "English",
+    languageLocalized: "English",
+    greeting: "Hello",
+    greetingTemplate: "{greeting}, {name}!",
+    locale: "en-GB",
+    countryLocalized: "United Kingdom",
+    labels: { name: "Name", address: "Address", country: "Country", language: "Language" }
+  }
 };
 
 const normalizeCountry = (country) => country.trim().toLowerCase();
@@ -46,9 +142,21 @@ const getGreetingForCountry = (country) => {
   return (
     countryLanguageMap[normalized] || {
       language: "English",
-      greeting: "Hello"
+      languageLocalized: "English",
+      greeting: "Hello",
+      greetingTemplate: "{greeting}, {name}!",
+      locale: "en-US",
+      countryLocalized: country.trim(),
+      labels: { name: "Name", address: "Address", country: "Country", language: "Language" }
     }
   );
+};
+
+const formatGreetingMessage = (greetingInfo, name) => {
+  const template = greetingInfo.greetingTemplate || "{greeting}, {name}!";
+  return template
+    .replace("{greeting}", greetingInfo.greeting)
+    .replace("{name}", name.trim());
 };
 
 const validateRegistration = (payload) => {
@@ -87,7 +195,12 @@ app.get("/api/registrations", async (req, res) => {
       return {
         ...row,
         greeting: greetingInfo.greeting,
-        language: greetingInfo.language
+        greetingMessage: formatGreetingMessage(greetingInfo, row.name),
+        language: greetingInfo.language,
+        languageLocalized: greetingInfo.languageLocalized,
+        locale: greetingInfo.locale,
+        countryLocalized: greetingInfo.countryLocalized,
+        labels: greetingInfo.labels
       };
     });
     res.json(withGreetings);
@@ -121,7 +234,12 @@ app.post("/api/registrations", async (req, res) => {
       address: address.trim(),
       country: country.trim(),
       greeting: greetingInfo.greeting,
-      language: greetingInfo.language
+      greetingMessage: formatGreetingMessage(greetingInfo, name),
+      language: greetingInfo.language,
+      languageLocalized: greetingInfo.languageLocalized,
+      locale: greetingInfo.locale,
+      countryLocalized: greetingInfo.countryLocalized,
+      labels: greetingInfo.labels
     });
   } catch (error) {
     res.status(500).json({
