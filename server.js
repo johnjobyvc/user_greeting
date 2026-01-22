@@ -25,18 +25,90 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const countryLanguageMap = {
-  japan: { language: "Japanese", greeting: "こんにちは" },
-  france: { language: "French", greeting: "Bonjour" },
-  spain: { language: "Spanish", greeting: "Hola" },
-  germany: { language: "German", greeting: "Hallo" },
-  italy: { language: "Italian", greeting: "Ciao" },
-  china: { language: "Chinese", greeting: "你好" },
-  korea: { language: "Korean", greeting: "안녕하세요" },
-  brazil: { language: "Portuguese", greeting: "Olá" },
-  india: { language: "Hindi", greeting: "नमस्ते" },
-  canada: { language: "English", greeting: "Hello" },
-  "united states": { language: "English", greeting: "Hello" },
-  "united kingdom": { language: "English", greeting: "Hello" }
+  japan: {
+    language: "Japanese",
+    greeting: "こんにちは",
+    languageCode: "ja",
+    locale: "ja-JP",
+    countryCode: "JP"
+  },
+  france: {
+    language: "French",
+    greeting: "Bonjour",
+    languageCode: "fr",
+    locale: "fr-FR",
+    countryCode: "FR"
+  },
+  spain: {
+    language: "Spanish",
+    greeting: "Hola",
+    languageCode: "es",
+    locale: "es-ES",
+    countryCode: "ES"
+  },
+  germany: {
+    language: "German",
+    greeting: "Hallo",
+    languageCode: "de",
+    locale: "de-DE",
+    countryCode: "DE"
+  },
+  italy: {
+    language: "Italian",
+    greeting: "Ciao",
+    languageCode: "it",
+    locale: "it-IT",
+    countryCode: "IT"
+  },
+  china: {
+    language: "Chinese",
+    greeting: "你好",
+    languageCode: "zh",
+    locale: "zh-CN",
+    countryCode: "CN"
+  },
+  korea: {
+    language: "Korean",
+    greeting: "안녕하세요",
+    languageCode: "ko",
+    locale: "ko-KR",
+    countryCode: "KR"
+  },
+  brazil: {
+    language: "Portuguese",
+    greeting: "Olá",
+    languageCode: "pt",
+    locale: "pt-BR",
+    countryCode: "BR"
+  },
+  india: {
+    language: "Hindi",
+    greeting: "नमस्ते",
+    languageCode: "hi",
+    locale: "hi-IN",
+    countryCode: "IN"
+  },
+  canada: {
+    language: "English",
+    greeting: "Hello",
+    languageCode: "en",
+    locale: "en-CA",
+    countryCode: "CA"
+  },
+  "united states": {
+    language: "English",
+    greeting: "Hello",
+    languageCode: "en",
+    locale: "en-US",
+    countryCode: "US"
+  },
+  "united kingdom": {
+    language: "English",
+    greeting: "Hello",
+    languageCode: "en",
+    locale: "en-GB",
+    countryCode: "GB"
+  }
 };
 
 const normalizeCountry = (country) => country.trim().toLowerCase();
@@ -46,7 +118,10 @@ const getGreetingForCountry = (country) => {
   return (
     countryLanguageMap[normalized] || {
       language: "English",
-      greeting: "Hello"
+      greeting: "Hello",
+      languageCode: "en",
+      locale: "en-US",
+      countryCode: "US"
     }
   );
 };
@@ -87,7 +162,10 @@ app.get("/api/registrations", async (req, res) => {
       return {
         ...row,
         greeting: greetingInfo.greeting,
-        language: greetingInfo.language
+        language: greetingInfo.language,
+        languageCode: greetingInfo.languageCode,
+        locale: greetingInfo.locale,
+        countryCode: greetingInfo.countryCode
       };
     });
     res.json(withGreetings);
@@ -121,7 +199,10 @@ app.post("/api/registrations", async (req, res) => {
       address: address.trim(),
       country: country.trim(),
       greeting: greetingInfo.greeting,
-      language: greetingInfo.language
+      language: greetingInfo.language,
+      languageCode: greetingInfo.languageCode,
+      locale: greetingInfo.locale,
+      countryCode: greetingInfo.countryCode
     });
   } catch (error) {
     res.status(500).json({

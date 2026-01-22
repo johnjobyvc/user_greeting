@@ -9,6 +9,83 @@ const setError = (field, message) => {
   }
 };
 
+const localizedLabels = {
+  en: {
+    name: "Name",
+    address: "Address",
+    country: "Country",
+    language: "Language"
+  },
+  fr: {
+    name: "Nom",
+    address: "Adresse",
+    country: "Pays",
+    language: "Langue"
+  },
+  es: {
+    name: "Nombre",
+    address: "Dirección",
+    country: "País",
+    language: "Idioma"
+  },
+  de: {
+    name: "Name",
+    address: "Adresse",
+    country: "Land",
+    language: "Sprache"
+  },
+  it: {
+    name: "Nome",
+    address: "Indirizzo",
+    country: "Paese",
+    language: "Lingua"
+  },
+  ja: {
+    name: "お名前",
+    address: "住所",
+    country: "国",
+    language: "言語"
+  },
+  zh: {
+    name: "姓名",
+    address: "地址",
+    country: "国家",
+    language: "语言"
+  },
+  ko: {
+    name: "이름",
+    address: "주소",
+    country: "국가",
+    language: "언어"
+  },
+  pt: {
+    name: "Nome",
+    address: "Endereço",
+    country: "País",
+    language: "Idioma"
+  },
+  hi: {
+    name: "नाम",
+    address: "पता",
+    country: "देश",
+    language: "भाषा"
+  }
+};
+
+const getLabels = (languageCode = "en") =>
+  localizedLabels[languageCode] || localizedLabels.en;
+
+const getDisplayName = (type, code, locale) => {
+  if (!code) {
+    return "";
+  }
+  if (typeof Intl !== "undefined" && Intl.DisplayNames) {
+    const display = new Intl.DisplayNames([locale], { type });
+    return display.of(code) || code;
+  }
+  return code;
+};
+
 const clearErrors = () => {
   document.querySelectorAll(".error").forEach((node) => {
     node.textContent = "";
@@ -25,11 +102,19 @@ const renderResults = (rows) => {
   rows.forEach((row) => {
     const card = document.createElement("div");
     card.className = "result-card";
+    const locale = row.locale || "en-US";
+    const languageCode = row.languageCode || "en";
+    const labels = getLabels(languageCode);
+    const localizedCountry =
+      getDisplayName("region", row.countryCode, locale) || row.country;
+    const localizedLanguage =
+      getDisplayName("language", languageCode, locale) || row.language;
     card.innerHTML = `
       <h3>${row.greeting}, ${row.name}!</h3>
-      <div class="result-meta">Language: ${row.language}</div>
-      <div class="result-meta">${row.address}</div>
-      <div class="result-meta">${row.country}</div>
+      <div class="result-meta">${labels.language}: ${localizedLanguage}</div>
+      <div class="result-meta">${labels.name}: ${row.name}</div>
+      <div class="result-meta">${labels.address}: ${row.address}</div>
+      <div class="result-meta">${labels.country}: ${localizedCountry}</div>
     `;
     resultsContainer.appendChild(card);
   });
