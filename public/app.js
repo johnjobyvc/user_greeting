@@ -25,11 +25,21 @@ const renderResults = (rows) => {
   rows.forEach((row) => {
     const card = document.createElement("div");
     card.className = "result-card";
+    const labels = row.labels || {
+      name: "Name",
+      address: "Address",
+      country: "Country",
+      language: "Language"
+    };
+    const countryLabel = row.countryLocalized || row.country;
+    const languageLabel = row.languageLocalized || row.language;
+    const greetingMessage = row.greetingMessage || `${row.greeting}, ${row.name}!`;
     card.innerHTML = `
-      <h3>${row.greeting}, ${row.name}!</h3>
-      <div class="result-meta">Language: ${row.language}</div>
-      <div class="result-meta">${row.address}</div>
-      <div class="result-meta">${row.country}</div>
+      <h3>${greetingMessage}</h3>
+      <div class="result-meta">${labels.name}: ${row.name}</div>
+      <div class="result-meta">${labels.address}: ${row.address}</div>
+      <div class="result-meta">${labels.country}: ${countryLabel}</div>
+      <div class="result-meta">${labels.language}: ${languageLabel}</div>
     `;
     resultsContainer.appendChild(card);
   });
