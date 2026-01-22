@@ -25,24 +25,26 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const countryLanguageMap = {
-  Japan: { language: "Japanese", greeting: "こんにちは" },
-  France: { language: "French", greeting: "Bonjour" },
-  Spain: { language: "Spanish", greeting: "Hola" },
-  Germany: { language: "German", greeting: "Hallo" },
-  Italy: { language: "Italian", greeting: "Ciao" },
-  China: { language: "Chinese", greeting: "你好" },
-  Korea: { language: "Korean", greeting: "안녕하세요" },
-  Brazil: { language: "Portuguese", greeting: "Olá" },
-  India: { language: "Hindi", greeting: "नमस्ते" },
-  Canada: { language: "English", greeting: "Hello" },
-  "United States": { language: "English", greeting: "Hello" },
-  "United Kingdom": { language: "English", greeting: "Hello" }
+  japan: { language: "Japanese", greeting: "こんにちは" },
+  france: { language: "French", greeting: "Bonjour" },
+  spain: { language: "Spanish", greeting: "Hola" },
+  germany: { language: "German", greeting: "Hallo" },
+  italy: { language: "Italian", greeting: "Ciao" },
+  china: { language: "Chinese", greeting: "你好" },
+  korea: { language: "Korean", greeting: "안녕하세요" },
+  brazil: { language: "Portuguese", greeting: "Olá" },
+  india: { language: "Hindi", greeting: "नमस्ते" },
+  canada: { language: "English", greeting: "Hello" },
+  "united states": { language: "English", greeting: "Hello" },
+  "united kingdom": { language: "English", greeting: "Hello" }
 };
 
+const normalizeCountry = (country) => country.trim().toLowerCase();
+
 const getGreetingForCountry = (country) => {
-  const trimmedCountry = country.trim();
+  const normalized = normalizeCountry(country);
   return (
-    countryLanguageMap[trimmedCountry] || {
+    countryLanguageMap[normalized] || {
       language: "English",
       greeting: "Hello"
     }
@@ -63,11 +65,38 @@ const validateRegistration = (payload) => {
   return errors;
 };
 
+const ensureSchema = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      address VARCHAR(255) NOT NULL,
+      country VARCHAR(100) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+};
+
 app.get("/api/registrations", async (req, res) => {
-  const [rows] = await pool.query(
-    "SELECT id, name, address, country, created_at FROM users ORDER BY created_at DESC"
-  );
-  res.json(rows);
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, name, address, country, created_at FROM users ORDER BY created_at DESC"
+    );
+    const withGreetings = rows.map((row) => {
+      const greetingInfo = getGreetingForCountry(row.country);
+      return {
+        ...row,
+        greeting: greetingInfo.greeting,
+        language: greetingInfo.language
+      };
+    });
+    res.json(withGreetings);
+  } catch (error) {
+    res.status(500).json({
+      error: "Unable to load registrations.",
+      detail: error.message
+    });
+  }
 });
 
 app.post("/api/registrations", async (req, res) => {
@@ -78,27 +107,41 @@ app.post("/api/registrations", async (req, res) => {
   }
 
   const { name, address, country } = req.body;
-  const [result] = await pool.execute(
-    "INSERT INTO users (name, address, country) VALUES (?, ?, ?)",
-    [name.trim(), address.trim(), country.trim()]
-  );
+  try {
+    const [result] = await pool.execute(
+      "INSERT INTO users (name, address, country) VALUES (?, ?, ?)",
+      [name.trim(), address.trim(), country.trim()]
+    );
 
-  const greetingInfo = getGreetingForCountry(country);
+    const greetingInfo = getGreetingForCountry(country);
 
-  res.status(201).json({
-    id: result.insertId,
-    name: name.trim(),
-    address: address.trim(),
-    country: country.trim(),
-    greeting: greetingInfo.greeting,
-    language: greetingInfo.language
-  });
+    res.status(201).json({
+      id: result.insertId,
+      name: name.trim(),
+      address: address.trim(),
+      country: country.trim(),
+      greeting: greetingInfo.greeting,
+      language: greetingInfo.language
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Unable to save registration.",
+      detail: error.message
+    });
+  }
 });
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
+ensureSchema()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server running on http://localhost:${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to initialize database schema:", error.message);
+    process.exit(1);
+  });

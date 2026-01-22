@@ -2,31 +2,6 @@ const form = document.getElementById("registration-form");
 const resultsContainer = document.getElementById("results");
 const formNote = document.getElementById("form-note");
 
-const countryLanguageMap = {
-  Japan: { language: "Japanese", greeting: "こんにちは" },
-  France: { language: "French", greeting: "Bonjour" },
-  Spain: { language: "Spanish", greeting: "Hola" },
-  Germany: { language: "German", greeting: "Hallo" },
-  Italy: { language: "Italian", greeting: "Ciao" },
-  China: { language: "Chinese", greeting: "你好" },
-  Korea: { language: "Korean", greeting: "안녕하세요" },
-  Brazil: { language: "Portuguese", greeting: "Olá" },
-  India: { language: "Hindi", greeting: "नमस्ते" },
-  Canada: { language: "English", greeting: "Hello" },
-  "United States": { language: "English", greeting: "Hello" },
-  "United Kingdom": { language: "English", greeting: "Hello" }
-};
-
-const getGreetingForCountry = (country) => {
-  const trimmedCountry = country.trim();
-  return (
-    countryLanguageMap[trimmedCountry] || {
-      language: "English",
-      greeting: "Hello"
-    }
-  );
-};
-
 const setError = (field, message) => {
   const error = document.querySelector(`[data-error-for="${field}"]`);
   if (error) {
@@ -48,12 +23,11 @@ const renderResults = (rows) => {
   }
 
   rows.forEach((row) => {
-    const greetingInfo = getGreetingForCountry(row.country);
     const card = document.createElement("div");
     card.className = "result-card";
     card.innerHTML = `
-      <h3>${greetingInfo.greeting}, ${row.name}!</h3>
-      <div class="result-meta">Language: ${greetingInfo.language}</div>
+      <h3>${row.greeting}, ${row.name}!</h3>
+      <div class="result-meta">Language: ${row.language}</div>
       <div class="result-meta">${row.address}</div>
       <div class="result-meta">${row.country}</div>
     `;
@@ -62,9 +36,16 @@ const renderResults = (rows) => {
 };
 
 const loadRegistrations = async () => {
-  const response = await fetch("/api/registrations");
-  const rows = await response.json();
-  renderResults(rows);
+  try {
+    const response = await fetch("/api/registrations");
+    if (!response.ok) {
+      throw new Error("Unable to load registrations.");
+    }
+    const rows = await response.json();
+    renderResults(rows);
+  } catch (error) {
+    resultsContainer.innerHTML = `<p class="subtitle">${error.message}</p>`;
+  }
 };
 
 form.addEventListener("submit", async (event) => {
@@ -100,34 +81,38 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  const response = await fetch("/api/registrations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const response = await fetch("/api/registrations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
 
-  if (!response.ok) {
     const data = await response.json();
-    if (data.errors) {
-      data.errors.forEach((message) => {
-        if (message.toLowerCase().includes("name")) {
-          setError("name", message);
-        } else if (message.toLowerCase().includes("address")) {
-          setError("address", message);
-        } else if (message.toLowerCase().includes("country")) {
-          setError("country", message);
-        }
-      });
+    if (!response.ok) {
+      if (data.errors) {
+        data.errors.forEach((message) => {
+          if (message.toLowerCase().includes("name")) {
+            setError("name", message);
+          } else if (message.toLowerCase().includes("address")) {
+            setError("address", message);
+          } else if (message.toLowerCase().includes("country")) {
+            setError("country", message);
+          }
+        });
+      }
+      formNote.textContent = data.error || "Please fix the highlighted errors.";
+      return;
     }
-    formNote.textContent = "Please fix the highlighted errors.";
-    return;
-  }
 
-  form.reset();
-  formNote.textContent = "Registration stored successfully.";
-  await loadRegistrations();
+    form.reset();
+    formNote.textContent = "Registration stored successfully.";
+    await loadRegistrations();
+  } catch (error) {
+    formNote.textContent = "Unable to save registration.";
+  }
 });
 
 loadRegistrations();
