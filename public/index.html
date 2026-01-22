@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Greeting Registration</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <header>
+          <p class="eyebrow">User Registration</p>
+          <h1>Register to receive a localized greeting</h1>
+          <p class="subtitle">
+            Enter your details and we will show your stored record with a greeting
+            in your country’s official language.
+          </p>
+        </header>
+        <form id="registration-form" novalidate>
+          <label>
+            Name
+            <input type="text" name="name" id="name" placeholder="Jane Doe" required />
+            <span class="error" data-error-for="name"></span>
+          </label>
+          <label>
+            Address
+            <input
+              type="text"
+              name="address"
+              id="address"
+              placeholder="123 Sakura Street"
+              required
+            />
+            <span class="error" data-error-for="address"></span>
+          </label>
+          <label>
+            Country
+            <input type="text" name="country" id="country" placeholder="Japan" required />
+            <span class="error" data-error-for="country"></span>
+          </label>
+          <button type="submit">Register</button>
+          <p class="form-note" id="form-note"></p>
+        </form>
+      </section>
+
+      <section class="card results">
+        <h2>Latest registrations</h2>
+        <p class="subtitle">Stored records with localized greetings.</p>
+        <div id="results"></div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
